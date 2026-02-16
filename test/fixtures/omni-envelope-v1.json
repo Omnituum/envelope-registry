@@ -1,0 +1,28 @@
+{
+  "v": "omnituum.envelope.v1",
+  "scheme": "hybrid",
+  "aead": "xsalsa20poly1305",
+  "contentNonce": "dGVzdC1ub25jZS0yNC1ieXRlcw==",
+  "ciphertext": "ZW5jcnlwdGVkLWNvbnRlbnQtaGVyZQ==",
+  "recipients": [
+    {
+      "hint": { "label": "alice" },
+      "wraps": {
+        "kyber": {
+          "kemCt": "a3liZXIta2VtLWNpcGhlcnRleHQ=",
+          "wrapNonce": "a3liZXItd3JhcC1ub25jZQ==",
+          "wrappedCk": "a3liZXItd3JhcHBlZC1jaw==",
+          "_comment": "base64 encoded values"
+        },
+        "x25519": {
+          "epk": "7832353531392d657068656d6572616c2d7075626c69632d6b6579",
+          "wrapNonce": "eDI1NTE5LXdyYXAtbm9uY2U=",
+          "wrappedCk": "eDI1NTE5LXdyYXBwZWQtY2s="
+        }
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-02-16T12:00:00Z"
+  }
+}

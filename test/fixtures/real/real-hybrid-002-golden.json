@@ -1,0 +1,4 @@
+{
+  "envelopeHash": "d510abadbc593360e561b4d6776973275a934262ded5dcfcf440d841d4950b2a",
+  "_note": "Hash computed as toHex(sha256(JSON.stringify(envelope))) by pqc-shared golden vector generator"
+}

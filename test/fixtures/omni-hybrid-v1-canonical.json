@@ -1,0 +1,4 @@
+{
+  "_description": "Expected canonical string for omni-hybrid-v1.json. meta.senderName and meta.senderId are stripped by projection. Keys are sorted lexicographically.",
+  "expectedCanonicalString": "{\"aead\":\"xsalsa20poly1305\",\"ciphertext\":\"ZW5jcnlwdGVkLW1lc3NhZ2UtY29udGVudA==\",\"contentNonce\":\"Y29udGVudC1ub25jZS0yNC1ieXRlcw==\",\"kyberKemCt\":\"a3liZXIta2VtLWNpcGhlcnRleHQtdGVzdA==\",\"kyberWrap\":{\"nonce\":\"a3liZXItd3JhcC1ub25jZS10ZXN0\",\"wrapped\":\"a3liZXItd3JhcHBlZC1jb250ZW50LWtleQ==\"},\"meta\":{\"createdAt\":\"2025-06-15T10:30:00Z\"},\"suite\":\"x25519+kyber768\",\"v\":\"omnituum.hybrid.v1\",\"x25519Epk\":\"abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789\",\"x25519Wrap\":{\"nonce\":\"eDI1NTE5LXdyYXAtbm9uY2UtdGVzdA==\",\"wrapped\":\"eDI1NTE5LXdyYXBwZWQtY29udGVudC1rZXk=\"}}"
+}
