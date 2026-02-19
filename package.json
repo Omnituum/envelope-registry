@@ -1,6 +1,6 @@
 {
   "name": "@omnituum/envelope-registry",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Canonical envelope type registry for Omnituum crypto containers",
   "type": "module",
   "sideEffects": false,
@@ -19,6 +19,7 @@
     "schemas"
   ],
   "scripts": {
+    "prepare": "npm run build",
     "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
