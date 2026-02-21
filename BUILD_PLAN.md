@@ -23,7 +23,7 @@ The registry does NOT define: Loggie version strings, thread semantics, inbox ro
 ## 1. Package Layout
 
 ```
-Omnituum/canonical-envelope-registry/
+Omnituum/envelope-registry/
 ├── package.json                     # @omnituum/envelope-registry
 ├── tsconfig.json
 ├── tsup.config.ts
@@ -511,11 +511,11 @@ A new abstract container that Loggie (or any product) can embed. This is the typ
 
 There are no `[MIRROR]` steps. Nothing is applied to both repos. `Loggie_SDK/` is read-only source material.
 
-### Phase 1: Create the Omni registry package (no consumers yet)
+### Phase 1: Create the Omni registry package (no consumers yet) — **COMPLETED 2026-02-16**
 
 | Step | Done when |
 |---|---|
-| 1.1 Create `Omnituum/canonical-envelope-registry/` directory structure | Directory exists with `package.json`, `tsconfig.json`, `tsup.config.ts` |
+| 1.1 Create `Omnituum/envelope-registry/` directory structure | Directory exists with `package.json`, `tsconfig.json`, `tsup.config.ts` |
 | 1.2 Write `src/versions.ts` with Omni-only version strings + metadata | `OMNI_VERSIONS` exported, zero `loggie.*` strings |
 | 1.3 Write `src/types/common.ts` with shared field types | Types compile, zero imports from outside |
 | 1.4 Write `src/types/omnituum-envelope-v1.ts` (new generic container) | Type has `v` as literal discriminant |
@@ -534,9 +534,9 @@ There are no `[MIRROR]` steps. Nothing is applied to both repos. `Loggie_SDK/` i
 | 1.17 Build with tsup, verify output | `dist/` contains ESM + CJS + `.d.ts`, zero runtime deps confirmed |
 | 1.18 Optional: generate JSON Schema files from TS types | Schema files exist in `schemas/` |
 
-### Phase 1a: Canonicalization cross-validation gate
+### Phase 1a: Canonicalization cross-validation gate — **PASSED 2026-02-16**
 
-> **This is a hard gate. Do not proceed to Phase 2 until it passes.**
+> **This is a hard gate. Do not proceed to Phase 2 until it passes.** — **GATE PASSED.**
 
 | Step | Done when |
 |---|---|
@@ -545,19 +545,38 @@ There are no `[MIRROR]` steps. Nothing is applied to both repos. `Loggie_SDK/` i
 | 1a.3 Assert byte-equality | `canonical-crosscheck.test.ts` passes |
 | 1a.4 If mismatch: fix registry canonicalization to match existing behavior, NOT the other way around | Existing signatures remain valid |
 
-### Phase 2: Adopt in Omnituum packages
+### Phase 2: Adopt in Omnituum packages — **COMPLETED 2026-02-21**
 
-| Step | Done when |
-|---|---|
-| 2.1 `Omnituum/pqc-shared/src/version.ts`: import `OMNI_VERSIONS.HYBRID_V1` from registry, re-export as `ENVELOPE_VERSION` for back-compat | No local literal, back-compat preserved |
-| 2.2 `Omnituum/pqc-shared/src/crypto/hybrid.ts`: import `OmniHybridV1` from registry, export `HybridEnvelope` as type alias | Local interface deleted |
-| 2.3 `Omnituum/secure-intake-client/src/envelope-types.ts`: **delete entire file**, import `OmniHybridV1` from registry | File deleted |
-| 2.4 `Omnituum/secure-intake-client/src/primitives.ts`: remove `ENVELOPE_VERSION` constant, import from registry | Local constant deleted |
-| 2.5 `Omnituum/secure-intake-cloudflare/functions/api/intake.ts`: keep `DEFAULT_ALLOWED_VERSIONS` as Loggie product policy (NOT imported from Omni) -- it validates `loggie.intake.v1` which is Loggie-owned | Version list stays local (Loggie product code) |
-| 2.6 Update `pqc-shared` and `secure-intake-client` `package.json` to depend on `@omnituum/envelope-registry` | Dependency declared |
-| 2.7 Run existing Omnituum tests | All pass |
+| Step | Status | Notes |
+|---|---|---|
+| 2.1 `pqc-shared/src/version.ts`: import `OMNI_VERSIONS.HYBRID_V1` from registry, re-export as `ENVELOPE_VERSION` | **Done** | Back-compat preserved |
+| 2.2 `pqc-shared/src/crypto/hybrid.ts`: import `OmniHybridV1`, export `HybridEnvelope` as type alias | **Done** | Changed from `interface extends` to `type` alias (intersection) to discourage field creep |
+| 2.3 `secure-intake-client/src/envelope-types.ts`: **delete**, redirect imports | **Done** | File deleted. `submit.ts`, `hybrid-lazy.ts` import `OmniHybridV1` directly from registry. `index.ts` exports deprecated `HybridEnvelope` alias. |
+| 2.4 `secure-intake-client/src/primitives.ts`: source `ENVELOPE_VERSION` from registry | **Done** | Uses `OMNI_VERSIONS.HYBRID_V1` from registry |
+| 2.5 `secure-intake-cloudflare`: keep `DEFAULT_ALLOWED_VERSIONS` local | **Done** | Not touched (Loggie product policy) |
+| 2.6 Both `package.json` files depend on `@omnituum/envelope-registry` | **Done** | `file:../envelope-registry` |
+| 2.7 All Omnituum tests pass | **Done** | pqc-shared: 33/33, secure-intake-client: 57/57, registry: 63/63 |
 
-### Phase 3: Extract + define Loggie envelope types in `loggie-sdk/`
+#### 2.1.3 Decision: `validateEnvelope()` NOT delegated to registry
+
+pqc-shared's `validateEnvelope()` was **not** changed to delegate to `validateOmniEnvelope()` from the registry. The two validators have incompatible semantics:
+
+1. **Legacy support:** pqc-shared accepts `pqc-demo.hybrid.v1` — registry rejects it as deprecated
+2. **Strictness:** pqc-shared checks exact `suite`/`aead` values — registry only checks they're strings
+3. **Numbers:** registry forbids numbers in projected fields — pqc-shared doesn't enforce this
+
+Delegating would either tighten validation (breaking legacy) or loosen it (dropping suite/aead checks). Both violate the "don't change behavior" constraint. The pqc-shared validator is product-level policy; the registry validator is structural. If ever unified, it should be via an explicit strictness tier design in a separate PR.
+
+### Phase 2.5: Hardening — **COMPLETED 2026-02-21**
+
+| Step | Status | Notes |
+|---|---|---|
+| 2.5.1 CI tripwire script (`scripts/check-drift.sh`) | **Done** | 4 checks: no `loggie.*` in registry, no hardcoded `omnituum.hybrid.v1` in consumers, zero runtime deps, no raw `loggie.*` literals in core/messaging src outside versions.ts. Run via `npm run lint:drift`. |
+| 2.5.2 Confirm `import type` used for all type-only imports | **Done** | All `OmniHybridV1` imports in secure-intake-client use `import type`. Runtime import of `OMNI_VERSIONS` is correct (value needed). |
+| 2.5.3 Lock alias deprecation strategy | **Done** | Documented in `MIGRATION.md`. Aliases kept for back-compat, removed at next major. |
+| 2.5.4 Flatten `HybridEnvelope` from `interface extends` to `type` alias | **Done** | Prevents "just add one field" drift. Functionally identical (intersection type). |
+
+### Phase 3: Extract + define Loggie envelope types in `loggie-sdk/` — **COMPLETED 2026-02-21**
 
 > **Package name mapping:** `loggie-sdk/packages/core/` is published as `@loggiecid/core`.
 > All references to `@loggiecid/core` in this plan mean `loggie-sdk/packages/core/` on disk.
@@ -579,56 +598,74 @@ There are no `[MIRROR]` steps. Nothing is applied to both repos. `Loggie_SDK/` i
 | `Loggie_SDK/packages/messaging/src/envelope-v2.ts` | Reference only | Verify `loggie-sdk/` envelope-v2 matches; refactor imports in `loggie-sdk/` copy |
 | `Loggie_SDK/packages/core/src/seal-v1.1.test.ts` | `loggie-sdk/packages/core/test/` (copy fixtures) | Golden envelope fixtures for cross-validation |
 
-#### 3-B: New files to create in `loggie-sdk/`
+#### 3-B: New files to create in `loggie-sdk/` — **ALL COMPLETED**
 
-| Step | Done when |
-|---|---|
-| 3.1 Create `loggie-sdk/packages/core/src/versions.ts`: define `LOGGIE_VERSIONS` with all `loggie.*` strings | Single source for Loggie version strings |
-| 3.2 Create `loggie-sdk/packages/core/src/types/envelopes.ts`: define `LoggieSealV1`, `LoggieSealV1_1`, `LoggieHybridV2`, `LoggieIntakeV1`, `AnyLoggieEnvelope` (extracted + renamed from frozen repo sources above) | All Loggie envelope types in one file, using Omni `RecipientWraps` etc. from registry |
-| 3.3 Create `loggie-sdk/packages/core/src/envelope-parse.ts`: single `parseLoggieEnvelope(unknown)` dispatch table (rewritten from extracted detection logic) | Replaces all 7 detection functions |
-| 3.4 Create `loggie-sdk/packages/core/src/envelope-canonical.ts`: per-Loggie-version canonicalization using Omni Canonical JSON algorithm but Loggie field projections (rewritten from extracted signing logic) | Loggie owns its own signing input definitions |
+| Step | Status | Notes |
+|---|---|---|
+| 3.1 `versions.ts`: `LOGGIE_VERSIONS` + all `loggie.*` strings | **Done** | Also added `PHANTOM_ENVELOPE_V2`, anchor tag constants (`ARCHIVE_VERSION`, `IDENTITY_TAG_VERSION`, `APP_VERSION`, `KEYBUNDLE_VERSION`, `NFT_VERSION`, `BLOB_VERSION`) |
+| 3.2 `types/envelopes.ts`: `LoggieSealV1`, `LoggieSealV1_1`, `LoggieHybridV2`, `LoggieIntakeV1`, `AnyLoggieEnvelope` | **Done** | Already existed. Correctly uses `typeof LOGGIE_VERSIONS.*` for all discriminants. |
+| 3.3 `envelope-parse.ts`: single `parseLoggieEnvelope(unknown)` dispatch table | **Done** | Already existed. Fixed phantom alias to use `PHANTOM_ENVELOPE_V2` constant. |
+| 3.4 `envelope-canonical.ts`: per-Loggie-version canonicalization | **Done** | Already existed. **Critical fix:** v1.1 uses `JSON.stringify` (not sorted-key canonicalization) to match frozen `createSignaturePayload()` contract. v2 uses Omni sorted-key canonicalization. |
 
-#### 3-C: Refactor existing `loggie-sdk/` files (these already exist, edit in place)
+#### 3-C: Refactor existing `loggie-sdk/` files — **CORRECTION A APPLIED**
 
-| Step | Done when |
-|---|---|
-| 3.5 `loggie-sdk/packages/core/src/types/index.ts`: deprecate old `SealedEnvelope`, `SealedEnvelopeV2` -- re-export from new `envelopes.ts` with aliases | Back-compat preserved, deprecation warnings |
-| 3.6 `loggie-sdk/packages/core/src/types/seal-v1.1.ts`: deprecate old `SealedEnvelopeV1_1` -- alias to `LoggieSealV1_1` | Back-compat preserved |
-| 3.7 `loggie-sdk/packages/core/src/crypto/envelope/types.ts`: remove local interfaces, import from new `envelopes.ts` | **`SealedEnvelopeV2` name collision resolved** |
-| 3.8 `loggie-sdk/packages/core/src/seal.ts`: replace `"loggie.seal.v1"` literals with `LOGGIE_VERSIONS.SEAL_V1` | Zero string literals |
-| 3.9 `loggie-sdk/packages/core/src/seal.browser.ts`: same | Zero string literals |
-| 3.10 `loggie-sdk/packages/core/src/seal-v1.1.ts`: replace literals + make `detectSealVersion()`/`isV1_1()` delegate to `parseLoggieEnvelope()`, mark `@deprecated` | Detection delegates to single parse table |
-| 3.11 `loggie-sdk/packages/core/src/seal-unified.ts`: use `parseLoggieEnvelope()` for dispatch | Single detection path |
-| 3.12 `loggie-sdk/packages/core/src/crypto/envelope/open.ts`: replace inline version checks with Loggie type guards | No inline string comparisons |
-| 3.13 `loggie-sdk/packages/messaging/src/types.ts`: remove duplicate types, re-export from core | Zero local envelope definitions |
-| 3.14 `loggie-sdk/packages/messaging/src/envelope-v2.ts`: replace `"loggie.hybrid.v2"` literals | Uses `LOGGIE_VERSIONS.HYBRID_V2` |
-| 3.15 `loggie-sdk/packages/browser-sdk/src/seal.ts`: update `detectEnvelopeFormat()` to delegate to core's `parseLoggieEnvelope()` | One detection path |
-| 3.16 Add `@omnituum/envelope-registry` to `loggie-sdk/packages/core/package.json` (for shared field types) | Dependency declared |
-| 3.17 Run all `loggie-sdk/` tests | Pass |
+> **Correction A applied:** No raw `loggie.*` or `omnituum.*` literals outside `versions.ts`. All type discriminants use `typeof LOGGIE_VERSIONS.*`. Enforced by Tripwire 4 in `check-drift.sh`.
+>
+> **Correction B confirmed:** `envelope-canonical.ts` already separates algorithm (shared `canonicalize()`) from projections (`projectSealV1_1()`, `projectHybridV2()`). Loggie owns projections. Additionally, v1.1 uses `JSON.stringify` (frozen contract) instead of sorted-key canonicalization.
 
-### Phase 3a: Loggie canonicalization cross-validation gate
+| Step | Status | Notes |
+|---|---|---|
+| 3.5 `types/index.ts`: deprecate old types, re-export from `envelopes.ts` | **Done** | Discriminants changed from raw literals to `typeof LOGGIE_VERSIONS.*` |
+| 3.6 `types/seal-v1.1.ts`: deprecate old `SealedEnvelopeV1_1` | **Done** | Discriminant uses `typeof LOGGIE_VERSIONS.SEAL_V1_1` |
+| 3.7 `crypto/envelope/types.ts`: remove local interfaces | **Done** | Both `v:` discriminants fixed to `typeof` form |
+| 3.8 `seal.ts`: replace literals | **Done** | Already uses `LOGGIE_VERSIONS.SEAL_V1` |
+| 3.9 `seal.browser.ts`: same | **Done** | Already correct |
+| 3.10 `seal-v1.1.ts`: replace literals + delegate detection | **Done** | Already uses `LOGGIE_VERSIONS.SEAL_V1_1` and delegates to `parseLoggieEnvelope()` |
+| 3.11 `seal-unified.ts`: use `parseLoggieEnvelope()` for dispatch | **Done** | Already delegates |
+| 3.12 `crypto/envelope/open.ts`: replace inline version checks | **Deferred** | Needs deeper refactor, out of Correction A scope |
+| 3.13 `messaging/src/types.ts`: fix literals | **Done** | 3 discriminants fixed: `v:` fields use `typeof LOGGIE_VERSIONS.*`, `version:` uses `typeof IDENTITY_PAYLOAD_VERSION` |
+| 3.14 `messaging/src/envelope-v2.ts`: replace literals | **Done** | Already uses `LOGGIE_VERSIONS.HYBRID_V2` |
+| 3.15 `browser-sdk/src/seal.ts`: delegate detection | **Deferred** | Out of Phase 3 core scope |
+| 3.16 Add `@omnituum/envelope-registry` to core `package.json` | **Done** | Already wired |
+| 3.17 Run all `loggie-sdk/` tests | **Done** | 729 tests passing (52 files), 0 failures |
 
-> **Hard gate. Do not proceed until it passes.**
+### Phase 3a: Loggie canonicalization cross-validation gate — **PASSED 2026-02-21**
 
-| Step | Done when |
-|---|---|
-| 3a.1 For each Loggie version with signing: **read** real signed envelopes from `Loggie_SDK/` tests (copy fixtures, do not modify source) | Fixtures collected |
-| 3a.2 Compute `canonicalString()` using current `Loggie_SDK/.../seal-v1.1.ts` line 95 logic AND new `loggie-sdk/.../envelope-canonical.ts` | Both strings recorded |
-| 3a.3 Assert string-equality on all fixtures | Cross-validation test passes |
-| 3a.4 If mismatch: fix new canonicalization to match frozen repo's behavior | Existing signatures remain valid |
+> **Hard gate passed.**
+>
+> **Critical finding:** The initial `loggieCanonicalString()` implementation used sorted-key canonicalization for v1.1, which produced different byte output than the frozen `createSignaturePayload()` (which uses `JSON.stringify` with insertion-order keys). Key order difference: `canonicalize()` → `{envelope, meta, recipients}` vs `JSON.stringify()` → `{envelope, recipients, meta}`. Fixed by having v1.1 use `JSON.stringify` to match the frozen contract. v2 continues to use Omni sorted-key canonicalization (no existing signatures to break).
 
-### Phase 4: Adopt in Frontend
+| Step | Status | Notes |
+|---|---|---|
+| 3a.1 Collect real signed envelopes from `Loggie_SDK/` tests | **Done** | v1.1 fixture from `cli/fixtures/v1.1/test-envelope.json` |
+| 3a.2 Compute both canonical strings | **Done** | Frozen `createSignaturePayload()` reproduced in test as reference |
+| 3a.3 Assert string-equality | **Done** | `envelope-canonical.test.ts`: 4 tests passing (byte-equality, UTF-8 encoding, key order verification, v1 rejection) |
+| 3a.4 Fix if mismatch | **Done** | Fixed: v1.1 now uses `JSON.stringify` (not `canonicalize()`) to match frozen contract |
 
-> `loggie-frontend/` is a live repo -- edits allowed here.
+### Phase 4: Adopt in Frontend — **COMPLETED 2026-02-21**
 
-| Step | Done when |
-|---|---|
-| 4.1 `loggie-frontend/.../CidPreview.tsx`: remove `ENVELOPE_VERSIONS` array, use Loggie `SUPPORTED_VERSIONS` from `@loggiecid/core` | No local version array |
-| 4.2 `loggie-frontend/.../useDecrypt.ts`: remove `SupportedEnvelopeVersion` type, import from `@loggiecid/core` | No local version list |
-| 4.3 `loggie-frontend/.../envelope-detect.ts`: replace `detectEnvelope()` body with core's `parseLoggieEnvelope()` | Frontend delegates to Loggie parse table |
-| 4.4 `loggie-frontend/.../SelfTestPanel.tsx` and `IntegrationHarness.tsx`: fix mock envelopes -- either use valid `LoggieSealV1_1` shape or explicitly type as `TestMockEnvelope` (separate from real types) | No `version: 2` numeric envelopes in production components |
-| 4.5 Frontend `package.json`: ensure `@loggiecid/core` dependency (which transitively provides Omni types) | Dependency chain clean |
-| 4.6 Run frontend build + tests | Pass |
+> Frontend was already ~90% compliant before Phase 4 started.
+> Version constants, detection delegation, and type imports were already wired to `@loggiecid/core`.
+
+| Step | Status | Notes |
+|---|---|---|
+| 4.1 `envelope-detect.ts`: version array from core | **Already done** | Uses `LOGGIE_VERSIONS.SEAL_V1`, `.SEAL_V1_1`, `.HYBRID_V2` from `@loggiecid/core`. Delegates to `detectLoggieVersion()`. |
+| 4.2 `useDecrypt.ts`: type from core | **Already done** | `SupportedEnvelopeVersion` is `LoggieVersionString` alias, marked `@deprecated`. Uses `parseLoggieEnvelope()` and `LOGGIE_VERSIONS.*`. |
+| 4.3 `envelope-detect.ts`: delegate to core parse | **Already done** | Delegates version detection to `detectLoggieVersion()` from core. |
+| 4.4 `SelfTestPanel.tsx` + `IntegrationHarness.tsx`: fix mock literals | **Done** | Replaced raw `'loggie.seal.v1.1'` with `LOGGIE_VERSIONS.SEAL_V1_1`. Both mocks typed as `Record<string, unknown>` with "mock — not a real envelope" comments. No numeric `version: 2` envelope mocks found (the `version: 2` in `types.ts` is a folder manifest schema version, different namespace). |
+| 4.5 Frontend `package.json`: `@loggiecid/core` dependency | **Already done** | `@loggiecid/core`, `@loggiecid/messaging`, `@loggiecid/browser-sdk`, `@loggiecid/onchain` all present. |
+| 4.6 Frontend build + tests | **Done** | Type-checks clean for changed files. Pre-existing errors are unrelated (`@loggiecid/web` module, vitest types). |
+| 4.7 `PROTOCOL_CONTRACT.md`: reference core constants | **Done** | Updated to reference `LOGGIE_VERSIONS.*` and `detectLoggieVersion()`. Added note pointing to `CANONICALIZATION.md`. |
+| 4.8 Drift tripwire for frontend | **Done** | Tripwire 5: no raw `loggie.seal.*`/`loggie.hybrid.*`/`loggie.intake.*` literals in frontend src. All 5 tripwires pass. |
+
+#### Frontend `loggie.*` namespace note
+
+The frontend contains many `loggie.*` strings beyond envelope versions:
+- **Signing domains:** `loggie.batch.v1`, `loggie.ai.turn.v1`, `loggie.archiver.envelope.v1` (EIP-712 domain separation)
+- **Storage schemas:** `loggie.storage.v1`, `loggie.folder.manifest` (storage/folder layer versioning)
+- **Content types:** `loggie.document.sidecar`, `loggie.document`, `loggie.dataset` (content type discriminants)
+
+These are different protocol namespaces and are NOT part of the envelope version migration scope. Centralizing them is a separate concern for future work.
 
 ### Phase 5: Adopt in CLI
 

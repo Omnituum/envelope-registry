@@ -24,7 +24,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "lint:loggie": "! grep -r 'loggie\\.' src/ && echo 'No loggie.* strings found in src/'"
+    "lint:drift": "bash scripts/check-drift.sh"
   },
   "dependencies": {},
   "devDependencies": {
