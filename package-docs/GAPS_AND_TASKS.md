@@ -1,9 +1,36 @@
 # @omnituum/envelope-registry — Gaps and Tasks
 
-**Date:** 2026-03-18
-**Status:** Active (v0.1.2)
+**Date:** 2026-04-21 (updated — migrated to GAPS_AND_TASKS Schema v1.0 per DOC_STANDARD; sweep batch 4a-extended, 4 / 5. New **ER-##** prefix activated per DOC_STANDARD v0.5.2. Prior: 2026-03-18.)
+**Module:** envelope-registry
+**Status:** active
+**Version:** 0.1.2
 **Tests:** vitest
-**Dependencies:** Zero (runtime)
+**Dependencies:** Zero (runtime — non-negotiable for bundling guarantees)
+**Disposition:** Canonical envelope-type authority. Zero runtime dependencies — adding any runtime dep breaks the bundling guarantee for `@loggiecid/core` and every other consumer. Strict scope boundary: `loggie.*` version strings cannot be added (design principle, not convenience). 11 ER-## items, 0 closed.
+
+---
+
+## Status Summary
+
+- **Tracked:** 11
+- **Complete:** 0
+- **Open:** 11
+
+---
+
+## Gaps
+
+- [ ] **ER-01** — JSON Schema completeness (schemas/ directory must cover all fields + constraints defined in TypeScript types; generate from or validate against TypeScript source to prevent drift)
+- [ ] **ER-02** — Canonical crosscheck gate (`canonical-crosscheck.test.ts` must verify `canonicalString()` output matches committed fixture bytes exactly)
+- [ ] **ER-03** — Drift detection in CI (`scripts/check-drift.sh` must run in CI for every PR; any commit changing a type without updating its JSON Schema should fail)
+- [ ] **ER-04** — Deprecation timeline enforcement (`deprecated.ts` listing with CI check that fails when deprecated types exceed their stated removal deadline — 3 minor versions or next major)
+- [ ] **ER-05** — OmniEnvelopeV1 coverage parity (ensure `omnituum.envelope.v1` base container has equal test coverage with the hybrid variant)
+- [ ] **ER-06** — Error message quality (`validate.ts` errors should include field path + expected type, not "validation failed"; consumers (secure-intake, loggie-core) need actionable errors)
+- [ ] **ER-07** — Version string registry export (`KNOWN_VERSIONS` array export so consumers can enumerate without hardcoding)
+- [ ] **ER-08** — Streaming envelope format `omnituum.stream.v1` (chunked/streaming encryption containers; required for large-file encryption in **PQV** + **SI**)
+- [ ] **ER-09** — Group envelope format `omnituum.group.v1` (group key management; required for multi-recipient beyond Loggie's envelope V2)
+- [ ] **ER-10** — Code generation from JSON Schema (generate TypeScript types from JSON Schema, or vice versa, to eliminate manual drift)
+- [ ] **ER-11** — Changelog automation (auto-generate CHANGELOG entries when types or version strings change)
 
 ---
 
