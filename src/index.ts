@@ -17,6 +17,7 @@ export type {
 export type {
   OmniEnvelopeV1,
   OmniHybridV1,
+  OmniHybridV2,
   AnyOmniEnvelope,
 } from './types/index.js';
 export type {
@@ -41,7 +42,7 @@ export type { ValidationResult } from './validate.js';
 export { canonicalString, canonicalBytes } from './canonical.js';
 
 // Type guards (separate module from detect)
-export { isOmniEnvelopeV1, isOmniHybridV1 } from './guards.js';
+export { isOmniEnvelopeV1, isOmniHybridV1, isOmniHybridV2 } from './guards.js';
 
 // Errors
 export { EnvelopeError, UnsupportedVersionError, ValidationError } from './errors.js';

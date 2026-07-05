@@ -4,6 +4,7 @@
 export const OMNI_VERSIONS = {
   ENVELOPE_V1: 'omnituum.envelope.v1',
   HYBRID_V1: 'omnituum.hybrid.v1',
+  HYBRID_V2: 'omnituum.hybrid.v2',
 } as const;
 
 export type OmniVersionString = typeof OMNI_VERSIONS[keyof typeof OMNI_VERSIONS];
@@ -25,10 +26,21 @@ export const VERSION_REGISTRY: readonly VersionMeta[] = [
     description: 'Generic crypto container with pluggable key wraps',
   },
   {
+    // Legacy as of v2: the content key is wrapped independently under X25519
+    // and Kyber, so possession of EITHER secret decrypts — security is
+    // min(X25519, ML-KEM), which defeats the post-quantum goal. Read-only;
+    // do not write new v1 envelopes.
     version: OMNI_VERSIONS.HYBRID_V1,
-    lifecycle: 'active',
+    lifecycle: 'legacy',
     since: '2025-01-01',
-    description: 'Hybrid X25519+Kyber768 envelope with xsalsa20poly1305 AEAD',
+    description: 'Hybrid X25519+Kyber768 envelope with xsalsa20poly1305 AEAD (independent wraps — read-only)',
+  },
+  {
+    version: OMNI_VERSIONS.HYBRID_V2,
+    lifecycle: 'active',
+    since: '2026-07-05',
+    description:
+      'Hybrid X25519+ML-KEM-1024 envelope, AND-combined KEK (single wrap under HKDF(ss_mlkem || ss_x25519) with transcript binding) — both primitives must be broken to unwrap',
   },
 ] as const;
 

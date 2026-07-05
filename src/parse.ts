@@ -1,6 +1,7 @@
 import type { AnyOmniEnvelope } from './types/union.js';
 import type { OmniEnvelopeV1 } from './types/omnituum-envelope-v1.js';
 import type { OmniHybridV1 } from './types/omnituum-hybrid-v1.js';
+import type { OmniHybridV2 } from './types/omnituum-hybrid-v2.js';
 import { detectOmniVersion } from './detect.js';
 import { validateOmniEnvelope } from './validate.js';
 import { EnvelopeError, UnsupportedVersionError } from './errors.js';
@@ -46,6 +47,8 @@ export function parseOmniEnvelope(input: unknown): ParseResult<AnyOmniEnvelope> 
       return { ok: true, value: input as OmniEnvelopeV1 };
     case OMNI_VERSIONS.HYBRID_V1:
       return { ok: true, value: input as OmniHybridV1 };
+    case OMNI_VERSIONS.HYBRID_V2:
+      return { ok: true, value: input as OmniHybridV2 };
     default: {
       const _exhaustive: never = version;
       return { ok: false, error: new UnsupportedVersionError(String(_exhaustive)) };

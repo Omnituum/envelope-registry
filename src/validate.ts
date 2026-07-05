@@ -215,6 +215,60 @@ function validateHybridV1(
   hasNumberValues(env.meta, 'meta', errors);
 }
 
+function validateHybridV2(
+  env: Record<string, unknown>,
+  errors: string[],
+  warnings: string[],
+): void {
+  if (env.suite !== 'x25519+mlkem1024') {
+    errors.push("Missing or invalid field: suite (must be 'x25519+mlkem1024')");
+  }
+  if (typeof env.aead !== 'string') {
+    errors.push('Missing or invalid field: aead');
+  }
+  if (typeof env.x25519Epk !== 'string') {
+    errors.push('Missing or invalid field: x25519Epk');
+  } else if (!isPlausibleHex(env.x25519Epk as string)) {
+    warnings.push('x25519Epk does not look like valid hex');
+  }
+  if (typeof env.kyberKemCt !== 'string') {
+    errors.push('Missing or invalid field: kyberKemCt');
+  } else if (!isPlausibleBase64(env.kyberKemCt as string)) {
+    warnings.push('kyberKemCt does not look like valid base64');
+  }
+  validateOmniKeyWrap(env.ckWrap, 'ckWrap', errors, warnings);
+  if (typeof env.contentNonce !== 'string') {
+    errors.push('Missing or invalid field: contentNonce');
+  } else if (!isPlausibleBase64(env.contentNonce as string)) {
+    warnings.push('contentNonce does not look like valid base64');
+  }
+  if (typeof env.ciphertext !== 'string') {
+    errors.push('Missing or invalid field: ciphertext');
+  } else if (!isPlausibleBase64(env.ciphertext as string)) {
+    warnings.push('ciphertext does not look like valid base64');
+  }
+
+  if (!env.meta || typeof env.meta !== 'object') {
+    errors.push('Missing or invalid field: meta');
+  } else {
+    const meta = env.meta as Record<string, unknown>;
+    if (typeof meta.createdAt !== 'string') {
+      errors.push('meta.createdAt must be a string');
+    } else if (!ISO_8601_LOOSE.test(meta.createdAt as string)) {
+      warnings.push('meta.createdAt does not look like ISO 8601');
+    }
+  }
+
+  hasNumberValues(env.suite, 'suite', errors);
+  hasNumberValues(env.aead, 'aead', errors);
+  hasNumberValues(env.x25519Epk, 'x25519Epk', errors);
+  hasNumberValues(env.kyberKemCt, 'kyberKemCt', errors);
+  hasNumberValues(env.ckWrap, 'ckWrap', errors);
+  hasNumberValues(env.contentNonce, 'contentNonce', errors);
+  hasNumberValues(env.ciphertext, 'ciphertext', errors);
+  hasNumberValues(env.meta, 'meta', errors);
+}
+
 /**
  * Structural validation only. No signature verification, no decryption.
  * Numbers in projected fields are errors (not warnings).
@@ -261,6 +315,9 @@ export function validateOmniEnvelope(input: unknown): ValidationResult {
       break;
     case OMNI_VERSIONS.HYBRID_V1:
       validateHybridV1(env, errors, warnings);
+      break;
+    case OMNI_VERSIONS.HYBRID_V2:
+      validateHybridV2(env, errors, warnings);
       break;
     default: {
       const _exhaustive: never = version;

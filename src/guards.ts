@@ -1,5 +1,6 @@
 import type { OmniEnvelopeV1 } from './types/omnituum-envelope-v1.js';
 import type { OmniHybridV1 } from './types/omnituum-hybrid-v1.js';
+import type { OmniHybridV2 } from './types/omnituum-hybrid-v2.js';
 import { OMNI_VERSIONS } from './versions.js';
 
 /**
@@ -39,6 +40,29 @@ export function isOmniHybridV1(env: unknown): env is OmniHybridV1 {
     typeof e.kyberKemCt === 'string' &&
     e.kyberWrap !== null &&
     typeof e.kyberWrap === 'object' &&
+    typeof e.contentNonce === 'string' &&
+    typeof e.ciphertext === 'string' &&
+    e.meta !== null &&
+    typeof e.meta === 'object' &&
+    typeof (e.meta as Record<string, unknown>).createdAt === 'string'
+  );
+}
+
+/**
+ * Type guard for OmniHybridV2.
+ * Checks version discriminant and required structural fields.
+ */
+export function isOmniHybridV2(env: unknown): env is OmniHybridV2 {
+  if (!env || typeof env !== 'object') return false;
+  const e = env as Record<string, unknown>;
+  return (
+    e.v === OMNI_VERSIONS.HYBRID_V2 &&
+    typeof e.suite === 'string' &&
+    typeof e.aead === 'string' &&
+    typeof e.x25519Epk === 'string' &&
+    typeof e.kyberKemCt === 'string' &&
+    e.ckWrap !== null &&
+    typeof e.ckWrap === 'object' &&
     typeof e.contentNonce === 'string' &&
     typeof e.ciphertext === 'string' &&
     e.meta !== null &&

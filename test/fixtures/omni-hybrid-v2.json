@@ -1,0 +1,16 @@
+{
+  "v": "omnituum.hybrid.v2",
+  "suite": "x25519+mlkem1024",
+  "aead": "xsalsa20poly1305",
+  "x25519Epk": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+  "kyberKemCt": "bWxrZW0tMTAyNC1rZW0tY2lwaGVydGV4dC10ZXN0",
+  "ckWrap": {
+    "nonce": "Y2std3JhcC1ub25jZS10ZXN0",
+    "wrapped": "Y2std3JhcHBlZC1jb250ZW50LWtleQ=="
+  },
+  "contentNonce": "Y29udGVudC1ub25jZS0yNC1ieXRlcw==",
+  "ciphertext": "ZW5jcnlwdGVkLW1lc3NhZ2UtY29udGVudA==",
+  "meta": {
+    "createdAt": "2026-07-05T10:30:00Z"
+  }
+}

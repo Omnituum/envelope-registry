@@ -48,6 +48,10 @@ export const PROJECTION_FIELDS: Record<OmniVersionString, readonly string[]> = {
     'aead', 'ciphertext', 'contentNonce', 'kyberKemCt', 'kyberWrap',
     'meta', 'suite', 'v', 'x25519Epk', 'x25519Wrap',
   ],
+  [OMNI_VERSIONS.HYBRID_V2]: [
+    'aead', 'ciphertext', 'ckWrap', 'contentNonce', 'kyberKemCt',
+    'meta', 'suite', 'v', 'x25519Epk',
+  ],
 } as const;
 
 /**
@@ -56,4 +60,5 @@ export const PROJECTION_FIELDS: Record<OmniVersionString, readonly string[]> = {
 export const META_PROJECTION: Record<OmniVersionString, readonly string[]> = {
   [OMNI_VERSIONS.ENVELOPE_V1]: ['createdAt'],
   [OMNI_VERSIONS.HYBRID_V1]: ['createdAt'],
+  [OMNI_VERSIONS.HYBRID_V2]: ['createdAt'],
 } as const;

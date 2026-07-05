@@ -2,7 +2,7 @@ export type AeadAlgorithm = 'xsalsa20poly1305';
 export type SealScheme = 'kyber' | 'x25519' | 'hybrid';
 export type KemAlgorithm = 'kyber768' | 'kyber1024';
 export type SigAlgorithm = 'dilithium3' | 'dilithium5';
-export type SuiteString = 'x25519+kyber768' | 'x25519';
+export type SuiteString = 'x25519+kyber768' | 'x25519' | 'x25519+mlkem1024';
 
 export interface KyberWrap {
   kemCt: string;

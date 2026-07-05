@@ -1,5 +1,6 @@
 export type { OmniEnvelopeV1 } from './omnituum-envelope-v1.js';
 export type { OmniHybridV1 } from './omnituum-hybrid-v1.js';
+export type { OmniHybridV2 } from './omnituum-hybrid-v2.js';
 export type { AnyOmniEnvelope } from './union.js';
 export type {
   SealScheme,
