@@ -17,7 +17,7 @@ Downstream consumers include `@omnituum/pqc-ble`, `@omnituum/pqc-shared`, `@dark
 
 ## Status
 
-**Stable** — v0.1.2. Core API frozen.
+**Stable** — v0.2.0. Core API frozen.
 
 ## Getting Started
 
